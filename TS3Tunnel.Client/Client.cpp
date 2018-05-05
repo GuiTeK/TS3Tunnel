@@ -1,6 +1,7 @@
 #include "Client.h"
 
 #include <QDebug>
+#include <QDir>
 
 #include "PlaybackAudioGenerator.h"
 
@@ -9,10 +10,25 @@ const QString Client::PING_STR = "Ping";
 
 int audioStreamCallback(const void *input, void *output, unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
-	PlaybackAudioGenerator *playbackAudioGenerator = reinterpret_cast<PlaybackAudioGenerator*>(userData);
+	Client::VoiceSession *voiceSession = reinterpret_cast<Client::VoiceSession*>(userData);
 	unsigned long audioBufferSize = frameCount * sizeof(opus_int16);
 
-	playbackAudioGenerator->read(reinterpret_cast<char*>(output), audioBufferSize);
+	voiceSession->AudioGenerator->read(reinterpret_cast<char*>(output), audioBufferSize);
+
+	if (voiceSession->SaveEnabled)
+	{
+		if (voiceSession->AudioSaveFile->isOpen() == false)
+		{
+			voiceSession->AudioSaveFile->open(QIODevice::OpenModeFlag::WriteOnly);
+		}
+
+		voiceSession->AudioSaveFile->write(reinterpret_cast<char*>(output), audioBufferSize);
+	}
+
+	if (voiceSession->ListenEnabled == false)
+	{
+		std::memset(output, 0, audioBufferSize);
+	}
 
 	return 0;
 }
@@ -27,7 +43,8 @@ m_serverPingTimer{},
 m_decodedVoicePacketsNb{ 0 },
 m_decodedVoicePacketsBytesNb{ 0 },
 m_decodingErrorsNb{ 0 },
-m_voiceSessions{}
+m_voiceSessions{},
+m_audioSavePath{ "" }
 {
 	this->connect(m_udpSocket, SIGNAL(readyRead()), this, SLOT(udpSocket_readyRead()));
 
@@ -40,9 +57,9 @@ Client::~Client()
 {
 	for (auto it = m_voiceSessions.begin(); it != m_voiceSessions.end(); ++it)
 	{
+		Pa_CloseStream((*it)->AudioStream);
 		opus_decoder_destroy((*it)->AudioDecoder);
 		delete (*it)->AudioGenerator;
-		Pa_CloseStream((*it)->AudioStream);
 
 		delete *it;
 	}
@@ -93,13 +110,26 @@ bool Client::registerToServer()
 }
 
 
-void Client::setVoiceSessionState(quint64 sessionId, bool enabled)
+void Client::setAudioSavePath(const QString &path)
+{
+	m_audioSavePath = path;
+}
+
+void Client::setVoiceSessionCapability(quint64 sessionId, VoiceSessionCapability capability, bool enabled)
 {
 	auto it = m_voiceSessions.find(sessionId);
 
 	if (it != m_voiceSessions.end())
 	{
-		(*it)->Enabled = enabled;
+		if (capability == VoiceSessionCapability::Listen)
+		{
+			(*it)->ListenEnabled = enabled;
+		}
+
+		else if (capability == VoiceSessionCapability::Save)
+		{
+			(*it)->SaveEnabled = enabled;
+		}
 	}
 }
 
@@ -143,7 +173,7 @@ void Client::decodeVoiceDataStream(QDataStream &voiceDataStream, qint64 voicePac
 
 		voiceSession = this->updateVoiceSessionList(voiceSessionId);
 
-		if (voiceSession->Enabled)
+		if (voiceSession->ListenEnabled || voiceSession->SaveEnabled)
 		{
 			opusResult = opus_decode(voiceSession->AudioDecoder, reinterpret_cast<unsigned char*>(voicePacketBuffer), voicePacketLength, pcm, AUDIO_FRAME_SIZE, 0);
 
@@ -172,14 +202,17 @@ Client::VoiceSession *Client::updateVoiceSessionList(quint64 sessionId)
 	if (it == m_voiceSessions.end())
 	{
 		VoiceSession *voiceSession = new VoiceSession{};
+		QString audioSaveFilepath = QDir{ m_audioSavePath }.filePath(QString::number(sessionId) + ".pcm");
 		int opusResult = 0;
 
 		voiceSession->Id = sessionId;
 		voiceSession->AudioDecoder = opus_decoder_create(OPUS_SAMPLE_RATE, OPUS_CHANNEL_COUNT, &opusResult);
 		voiceSession->AudioGenerator = new PlaybackAudioGenerator{};
-		voiceSession->Enabled = false;
+		voiceSession->ListenEnabled = false;
+		voiceSession->SaveEnabled = false;
+		voiceSession->AudioSaveFile = new QFile{ audioSaveFilepath };
 
-		Pa_OpenDefaultStream(&voiceSession->AudioStream, 0, OPUS_CHANNEL_COUNT, paInt16, OPUS_SAMPLE_RATE, AUDIO_FRAME_SIZE, audioStreamCallback, voiceSession->AudioGenerator);
+		Pa_OpenDefaultStream(&voiceSession->AudioStream, 0, OPUS_CHANNEL_COUNT, paInt16, OPUS_SAMPLE_RATE, AUDIO_FRAME_SIZE, audioStreamCallback, voiceSession);
 
 		if (opusResult != paNoError || voiceSession->AudioStream == nullptr)
 		{

@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 
 #include <QCheckBox>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow{ parent },
 m_client{ nullptr },
@@ -8,10 +9,11 @@ m_refreshUiStatsTimer{}
 {
 	ui.setupUi(this);
 
-	ui.VoiceSessionsTableWidget->setColumnCount(2);
-	ui.VoiceSessionsTableWidget->setHorizontalHeaderLabels(QStringList{ "Session ID", "Listen" });
+	ui.VoiceSessionsTableWidget->setColumnCount(3);
+	ui.VoiceSessionsTableWidget->setHorizontalHeaderLabels(QStringList{ "Session ID", "Listen", "Save" });
 	ui.VoiceSessionsTableWidget->setColumnWidth(0, 150);
 	ui.VoiceSessionsTableWidget->setColumnWidth(1, 50);
+	ui.VoiceSessionsTableWidget->setColumnWidth(2, 50);
 
 	this->setMinimumSize(this->size());
 	this->setMaximumSize(this->size());
@@ -29,6 +31,7 @@ void MainWindow::on_ConnectPushButton_clicked(bool checked)
 	this->ui.statusBar->showMessage("Connecting...");
 	m_client = new Client{ QHostAddress{ this->ui.ServerIPAddressLineEdit->text() }, static_cast<quint16>(this->ui.ServerPortSpinBox->value()), this->ui.PasswordLineEdit->text(), this };
 
+	m_client->setAudioSavePath(this->ui.StorageFolderLineEdit->text());
 	this->connect(m_client, SIGNAL(newVoiceSession(quint64)), this, SLOT(on_ts3eClient_newVoiceSession(quint64)));
 
 	if (m_client->setupAudioPlayback())
@@ -50,6 +53,21 @@ void MainWindow::on_ConnectPushButton_clicked(bool checked)
 	}
 }
 
+void MainWindow::on_StorageFolderBrowsePushButton_clicked(bool checked)
+{
+	QString storageFolder = QFileDialog::getExistingDirectory(this, "TS3Tunnel - Audio Storage Folder", QString{}, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+	this->ui.StorageFolderLineEdit->setText(storageFolder);
+}
+
+void MainWindow::on_StorageFolderLineEdit_textChanged(const QString &text)
+{
+	if (m_client)
+	{
+		m_client->setAudioSavePath(this->ui.StorageFolderLineEdit->text());
+	}
+}
+
 void MainWindow::on_refreshUiStatsTimer_timeout()
 {
 	if (m_client != nullptr)
@@ -63,18 +81,27 @@ void MainWindow::on_refreshUiStatsTimer_timeout()
 void MainWindow::on_ts3eClient_newVoiceSession(quint64 sessionId)
 {
 	QCheckBox *voiceSessionListenCheckbox = new QCheckBox{};
+	QCheckBox *voiceSessionSaveCheckbox = new QCheckBox{};
+
 	voiceSessionListenCheckbox->setProperty("VoiceSessionId", sessionId);
+	voiceSessionListenCheckbox->setProperty("VoiceSessionCapability", static_cast<int>(Client::VoiceSessionCapability::Listen));
+
+	voiceSessionSaveCheckbox->setProperty("VoiceSessionId", sessionId);
+	voiceSessionSaveCheckbox->setProperty("VoiceSessionCapability", static_cast<int>(Client::VoiceSessionCapability::Save));
 
 	ui.VoiceSessionsTableWidget->insertRow(ui.VoiceSessionsTableWidget->rowCount());
 	ui.VoiceSessionsTableWidget->setItem(ui.VoiceSessionsTableWidget->rowCount() - 1, 0, new QTableWidgetItem{ QString::number(sessionId) });
 	ui.VoiceSessionsTableWidget->setCellWidget(ui.VoiceSessionsTableWidget->rowCount() - 1, 1, voiceSessionListenCheckbox);
+	ui.VoiceSessionsTableWidget->setCellWidget(ui.VoiceSessionsTableWidget->rowCount() - 1, 2, voiceSessionSaveCheckbox);
 
-	this->connect(voiceSessionListenCheckbox, SIGNAL(stateChanged(int)), this, SLOT(on_voiceSessionListenCheckBox_stateChanged(int)));
+	this->connect(voiceSessionListenCheckbox, SIGNAL(stateChanged(int)), this, SLOT(on_voiceSessionCapabilityCheckBox_stateChanged(int)));
+	this->connect(voiceSessionSaveCheckbox, SIGNAL(stateChanged(int)), this, SLOT(on_voiceSessionCapabilityCheckBox_stateChanged(int)));
 }
 
-void MainWindow::on_voiceSessionListenCheckBox_stateChanged(int state)
+void MainWindow::on_voiceSessionCapabilityCheckBox_stateChanged(int state)
 {
 	quint64 sessionId = QObject::sender()->property("VoiceSessionId").toULongLong();
+	Client::VoiceSessionCapability capability = static_cast<Client::VoiceSessionCapability>(QObject::sender()->property("VoiceSessionCapability").toInt());
 
-	m_client->setVoiceSessionState(sessionId, state == Qt::CheckState::Checked);
+	m_client->setVoiceSessionCapability(sessionId, capability, state == Qt::CheckState::Checked);
 }

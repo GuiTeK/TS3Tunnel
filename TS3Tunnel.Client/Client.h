@@ -10,6 +10,7 @@
 #include <QDataStream>
 #include <QHash>
 #include <QIODevice>
+#include <QFile>
 #include <QTimer>
 #include <QUdpSocket>
 #include <QtMultimedia/QAudioOutput>
@@ -24,6 +25,24 @@ class Client : public QObject
 	Q_OBJECT
 
 public:
+	enum class VoiceSessionCapability : int
+	{
+		Listen,
+		Save
+	};
+
+	struct VoiceSession
+	{
+		quint64 Id;
+		OpusDecoder *AudioDecoder;
+		PlaybackAudioGenerator *AudioGenerator;
+		PaStream *AudioStream;
+		QFile *AudioSaveFile;
+		bool ListenEnabled;
+		bool SaveEnabled;
+	};
+
+
 	Client(const QHostAddress &serverAddress, quint16 serverPort, const QString &serverPassword, QObject *parent);
 	~Client();
 
@@ -34,7 +53,8 @@ public:
 	bool setupAudioPlayback();
 	bool registerToServer();
 
-	void setVoiceSessionState(quint64 sessionId, bool enabled);
+	void setAudioSavePath(const QString &path);
+	void setVoiceSessionCapability(quint64 sessionId, VoiceSessionCapability capability, bool enabled);
 
 
 signals:
@@ -47,15 +67,6 @@ private slots:
 
 
 private:
-	struct VoiceSession
-	{
-		quint64 Id;
-		OpusDecoder *AudioDecoder;
-		PlaybackAudioGenerator *AudioGenerator;
-		PaStream *AudioStream;
-		bool Enabled;
-	};
-
 	void decodeVoiceDataStream(QDataStream &voiceDataStream, qint64 voicePacketBufferReserveSize);
 	VoiceSession *updateVoiceSessionList(quint64 sessionId);
 
@@ -77,4 +88,5 @@ private:
 	int m_decodedVoicePacketsBytesNb;
 	int m_decodingErrorsNb;
 	QHash<quint64, VoiceSession*> m_voiceSessions;
+	QString m_audioSavePath;
 };

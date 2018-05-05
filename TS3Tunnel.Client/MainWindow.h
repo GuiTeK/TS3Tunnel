@@ -17,9 +17,11 @@ public:
 
 private slots:
 	void on_ConnectPushButton_clicked(bool checked = false);
+	void on_StorageFolderBrowsePushButton_clicked(bool checked = false);
+	void on_StorageFolderLineEdit_textChanged(const QString &text);
 	void on_refreshUiStatsTimer_timeout();
 	void on_ts3eClient_newVoiceSession(quint64 sessionId);
-	void on_voiceSessionListenCheckBox_stateChanged(int state);
+	void on_voiceSessionCapabilityCheckBox_stateChanged(int state);
 
 
 private:

@@ -47,6 +47,9 @@ public:
     QSpinBox *ServerPortSpinBox;
     QLabel *PasswordLabel;
     QLineEdit *PasswordLineEdit;
+    QLabel *StorageFolderLabel;
+    QLineEdit *StorageFolderLineEdit;
+    QPushButton *StorageFolderBrowsePushButton;
     QTableWidget *VoiceSessionsTableWidget;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
@@ -56,7 +59,7 @@ public:
     {
         if (MainWindowClass->objectName().isEmpty())
             MainWindowClass->setObjectName(QStringLiteral("MainWindowClass"));
-        MainWindowClass->resize(584, 303);
+        MainWindowClass->resize(604, 328);
         QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -66,7 +69,7 @@ public:
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         StatisticsGroupBox = new QGroupBox(centralWidget);
         StatisticsGroupBox->setObjectName(QStringLiteral("StatisticsGroupBox"));
-        StatisticsGroupBox->setGeometry(QRect(10, 150, 301, 91));
+        StatisticsGroupBox->setGeometry(QRect(10, 180, 301, 91));
         DecodedVoicePacketsLabel = new QLabel(StatisticsGroupBox);
         DecodedVoicePacketsLabel->setObjectName(QStringLiteral("DecodedVoicePacketsLabel"));
         DecodedVoicePacketsLabel->setGeometry(QRect(10, 20, 121, 16));
@@ -87,22 +90,22 @@ public:
         DecodedVoicePacketsBytesLabel->setGeometry(QRect(10, 40, 161, 16));
         SettingsGroupBox = new QGroupBox(centralWidget);
         SettingsGroupBox->setObjectName(QStringLiteral("SettingsGroupBox"));
-        SettingsGroupBox->setGeometry(QRect(10, 10, 301, 131));
+        SettingsGroupBox->setGeometry(QRect(10, 10, 301, 161));
         ConnectPushButton = new QPushButton(SettingsGroupBox);
         ConnectPushButton->setObjectName(QStringLiteral("ConnectPushButton"));
-        ConnectPushButton->setGeometry(QRect(110, 90, 75, 23));
+        ConnectPushButton->setGeometry(QRect(110, 120, 75, 23));
         ServerIPAddressLineEdit = new QLineEdit(SettingsGroupBox);
         ServerIPAddressLineEdit->setObjectName(QStringLiteral("ServerIPAddressLineEdit"));
-        ServerIPAddressLineEdit->setGeometry(QRect(90, 20, 113, 22));
+        ServerIPAddressLineEdit->setGeometry(QRect(100, 20, 113, 22));
         TS3EServerPortColonLabel = new QLabel(SettingsGroupBox);
         TS3EServerPortColonLabel->setObjectName(QStringLiteral("TS3EServerPortColonLabel"));
-        TS3EServerPortColonLabel->setGeometry(QRect(210, 20, 16, 16));
+        TS3EServerPortColonLabel->setGeometry(QRect(220, 20, 16, 16));
         ServerLabel = new QLabel(SettingsGroupBox);
         ServerLabel->setObjectName(QStringLiteral("ServerLabel"));
         ServerLabel->setGeometry(QRect(10, 20, 71, 16));
         ServerPortSpinBox = new QSpinBox(SettingsGroupBox);
         ServerPortSpinBox->setObjectName(QStringLiteral("ServerPortSpinBox"));
-        ServerPortSpinBox->setGeometry(QRect(220, 20, 61, 22));
+        ServerPortSpinBox->setGeometry(QRect(230, 20, 61, 22));
         ServerPortSpinBox->setMaximum(65535);
         ServerPortSpinBox->setValue(42317);
         PasswordLabel = new QLabel(SettingsGroupBox);
@@ -110,16 +113,26 @@ public:
         PasswordLabel->setGeometry(QRect(10, 50, 71, 16));
         PasswordLineEdit = new QLineEdit(SettingsGroupBox);
         PasswordLineEdit->setObjectName(QStringLiteral("PasswordLineEdit"));
-        PasswordLineEdit->setGeometry(QRect(90, 50, 113, 22));
+        PasswordLineEdit->setGeometry(QRect(100, 50, 113, 22));
         PasswordLineEdit->setEchoMode(QLineEdit::Password);
+        StorageFolderLabel = new QLabel(SettingsGroupBox);
+        StorageFolderLabel->setObjectName(QStringLiteral("StorageFolderLabel"));
+        StorageFolderLabel->setGeometry(QRect(10, 80, 81, 16));
+        StorageFolderLineEdit = new QLineEdit(SettingsGroupBox);
+        StorageFolderLineEdit->setObjectName(QStringLiteral("StorageFolderLineEdit"));
+        StorageFolderLineEdit->setGeometry(QRect(100, 80, 113, 22));
+        StorageFolderLineEdit->setEchoMode(QLineEdit::Normal);
+        StorageFolderBrowsePushButton = new QPushButton(SettingsGroupBox);
+        StorageFolderBrowsePushButton->setObjectName(QStringLiteral("StorageFolderBrowsePushButton"));
+        StorageFolderBrowsePushButton->setGeometry(QRect(220, 80, 75, 23));
         VoiceSessionsTableWidget = new QTableWidget(centralWidget);
         VoiceSessionsTableWidget->setObjectName(QStringLiteral("VoiceSessionsTableWidget"));
-        VoiceSessionsTableWidget->setGeometry(QRect(320, 15, 241, 221));
+        VoiceSessionsTableWidget->setGeometry(QRect(320, 15, 271, 251));
         VoiceSessionsTableWidget->setColumnCount(0);
         MainWindowClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindowClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 584, 21));
+        menuBar->setGeometry(QRect(0, 0, 604, 21));
         MainWindowClass->setMenuBar(menuBar);
         mainToolBar = new QToolBar(MainWindowClass);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
@@ -148,6 +161,8 @@ public:
         TS3EServerPortColonLabel->setText(QApplication::translate("MainWindowClass", ":", nullptr));
         ServerLabel->setText(QApplication::translate("MainWindowClass", "Server :", nullptr));
         PasswordLabel->setText(QApplication::translate("MainWindowClass", "Password :", nullptr));
+        StorageFolderLabel->setText(QApplication::translate("MainWindowClass", "Storage folder :", nullptr));
+        StorageFolderBrowsePushButton->setText(QApplication::translate("MainWindowClass", "Browse...", nullptr));
     } // retranslateUi
 
 };
