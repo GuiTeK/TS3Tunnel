@@ -4,7 +4,7 @@
 
 #include <opus/opus.h>
 
-//#include <portaudio.h>
+#include <portaudio.h>
 
 #include <QBuffer>
 #include <QDataStream>
@@ -13,6 +13,8 @@
 #include <QTimer>
 #include <QUdpSocket>
 #include <QtMultimedia/QAudioOutput>
+
+#include "PlaybackAudioGenerator.h"
 
 class MainWindow;
 
@@ -48,21 +50,22 @@ private:
 	struct VoiceSession
 	{
 		quint64 Id;
+		OpusDecoder *AudioDecoder;
+		PlaybackAudioGenerator *AudioGenerator;
+		PaStream *AudioStream;
 		bool Enabled;
 	};
 
-	void decodeVoiceDataStream(QDataStream &voiceDataStream, QIODevice *outputDevice, qint64 voicePacketBufferReserveSize);
-	bool updateVoiceSessionList(quint64 sessionId);
+	void decodeVoiceDataStream(QDataStream &voiceDataStream, qint64 voicePacketBufferReserveSize);
+	VoiceSession *updateVoiceSessionList(quint64 sessionId);
 
 	static const int SERVER_PING_TIMER_INTERVAL_SEC = 2;
 	static const QString PING_STR;
 
-	static const qint64 PLAYBACK_AUDIO_BUFFER_SIZE = 960 * 4;
-
 	static const int OPUS_CHANNEL_COUNT = 1;
 	static const std::size_t OPUS_SAMPLE_SIZE = sizeof(opus_int16) * 8;
 	static const opus_int32 OPUS_SAMPLE_RATE = 48000;
-	static const int OPUS_FRAME_SIZE = 960;
+	static const int AUDIO_FRAME_SIZE = 960;
 
 
 	QHostAddress m_serverAddress;
@@ -70,12 +73,8 @@ private:
 	QString m_serverPassword;
 	QUdpSocket *m_udpSocket;
 	QTimer m_serverPingTimer;
-	QAudioOutput *m_audioOutput;
-	QIODevice *m_playbackDevice;
-	OpusDecoder *m_opusDecoder;
 	int m_decodedVoicePacketsNb;
 	int m_decodedVoicePacketsBytesNb;
 	int m_decodingErrorsNb;
-	QHash<quint64, VoiceSession> m_voiceSessions;
-	//PaStream *m_paStream;
+	QHash<quint64, VoiceSession*> m_voiceSessions;
 };

@@ -19,11 +19,11 @@ Tested with:
 ### Client on Windows
 
 1. Install [Qt](https://www.qt.io/)
-2. Optional: install PortAudio using [vcpkg](https://github.com/Microsoft/vcpkg)
+2. Install [PortAudio](http://portaudio.com/) using [vcpkg](https://github.com/Microsoft/vcpkg)
 3. Compile using Visual Studio
 
 Tested with:
 * Windows 10 x64
 * Visual Studio 2015 update 3 (compiling for x86)
 * Qt 5.10.1
-* PortAudio 19.0.6 (optional)
+* PortAudio 19.0.6
